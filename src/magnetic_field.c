@@ -74,7 +74,6 @@ static void normalise_magnetic_field()
 
  	double max_B2 = 0;
 
-	#pragma omp parallel for 
 	for (size_t ipart = 0; ipart < Param.Npart[0]; ipart++) {
 		
 		double bfld2 = p2(SphP[ipart].Bfld[0]) 
