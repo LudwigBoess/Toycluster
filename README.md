@@ -144,7 +144,7 @@ Output_file ./IC_Cluster    % Base name
 Ntotal      2000000         % Total Number of Particles in R200
 Mtotal      1.1e5           % Total Mass in Code Units
 
-Mass_Ratio  0               % set =0 for single cluster
+Mass_Ratio  2               % set =0 for single cluster
 
 ImpactParam 0
 ZeroEOrbitFrac 0.5
