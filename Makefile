@@ -3,7 +3,7 @@ SHELL = /bin/bash
 ## OPTIONS  ##
 OPT 	+= -DNFWC_DUFFY08	# alternate fit to concentr. param
 
-OPT += -DBETA=0.54
+OPT += -DBETA=0.66
 
 #OPT     += -DPARABOLA       # merge in a parabola
 OPT	+= -DCOMET			# merge like a comet, ball+tail (recommended)
@@ -34,6 +34,13 @@ CC       = gcc
 OPTIMIZE = -Wall -g -O2
 GSL_INCL = $(CPPFLAGS)
 GSL_LIBS = $(LDFLAGS)
+
+ifeq ($(SYSTYPE),C2PAP)
+CC      	=  gcc
+OPTIMIZE	= -Ofast -g
+GSL_INCL = $(GSL_INC)
+GSL_LIBS = $(GSL_SHLIB)
+endif
 
 ifeq ($(SYSTYPE),DARWIN)
 CC      	=  icc
