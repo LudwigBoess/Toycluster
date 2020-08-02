@@ -1,25 +1,25 @@
 % % Toycluster Parameter File %%
 
-Output_file ./IC_single_0   % Base name
+Output_file ./ClusterMerger_2to1_1e6   % Base name
 
-Ntotal      1000000  % Total Number of Particles in R200
-Mtotal      1e5   % Total Mass in Code Units
+Ntotal      2000000  % Total Number of Particles in R200
+Mtotal      1.1e5   % Total Mass in Code Units
 
-Mass_Ratio  0 %.3125       % set =0 for single cluster
+Mass_Ratio  2       % set =0 for single cluster
 
-ImpactParam 50
-ZeroEOrbitFrac 0.8
+ImpactParam 0
+ZeroEOrbitFrac 0.5
 
-Cuspy       0      % Use cuspy model (rc /= 10)
+Cuspy       1      % Use cuspy model (rc /= 10)
 
-Redshift	0.87
+Redshift	0.0
 
-Bfld_Norm   20e-6    % B(r) = B0 * normalised_density^eta
+Bfld_Norm   5e-6    % B(r) = B0 * normalised_density^eta
 Bfld_Eta    0.5     % like Bonafede 2010. B0 /=2 if Mtotal<5d4
 Bfld_Scale  100
 
 bf          0.17 	% bf in r200, bf = 17% ~ 14% in r500
-h_100       0.7     % HubbleConstant/100
+h_100       1.0     % HubbleConstant/100
 
 %Units
 UnitLength_in_cm 			3.085678e21        %  1.0 kpc
@@ -30,31 +30,30 @@ UnitVelocity_in_cm_per_s 	1e5                %  1 km/sec
 %% here some more merger parameters can be set by hand
 
 % cluster 0
-c_nfw_0     4
+c_nfw_0     3.18951
 v_com_0     0
-beta_0		0.54
-rc_0        30
+beta_0		0.66
+rc_0        215.588
 
 % cluster 1
-c_nfw_1    4.089
+c_nfw_1     3.41133
 v_com_1     0
-beta_1		0.79
-rc_1        300
+beta_1		0.66
+rc_1        159.986
 
 %% -DADD_THIRD_SUBHALO Options
 
 SubFirstMass 1e12
 
-SubFirstPos0 0
-SubFirstPos1 0
-SubFirstPos2 0
+SubFirstPos0 10
+SubFirstPos1 120
+SubFirstPos2 980
 
-SubFirstVel0 0
-SubFirstVel1 0
-SubFirstVel2 0
+SubFirstVel0 100
+SubFirstVel1 100
+SubFirstVel2 100
 
 %% -DDOUBLE_BETA_COOL_CORES Options
 
 Rho0_Fac	50	% increase in Rho0
 Rc_Fac		40	% decrease in Rcore
-
