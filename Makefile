@@ -35,7 +35,7 @@ OPTIMIZE = -Wall -g -O2
 GSL_INCL = $(CPPFLAGS)
 GSL_LIBS = $(LDFLAGS)
 
-ifeq ($(SYSTYPE),C2PAP)
+ifeq ($(SYSTYPE),SuperMUC-NG)
 CC      	=  gcc
 OPTIMIZE	= -Ofast -g
 GSL_INCL = $(GSL_INC)
