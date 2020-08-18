@@ -5,9 +5,9 @@
 struct Tree_Node {
 	uint32_t Bitfield; 	// bit 0-5:level, 6-8:key, 9:local, 10:top, 11-31:free
 	int DNext;		   	// Distance to the next node; or particle -DNext-1
-	float Pos[3];		// Node Center
+	double Pos[3];		// Node Center
 	int Npart;			// Number of particles in node
-	float Size;
+	double Size;
 } *Tree;
 
 int NNodes = 0;
@@ -22,11 +22,11 @@ void Tree_Build();
 void gravity_tree_init();
 int Level(const int node); 
 
-int Find_ngb_tree(const int ipart, const float hsml, int ngblist[NGBMAX])
+int Find_ngb_tree(const int ipart, const double hsml, int ngblist[NGBMAX])
 {    
-	const float boxsize =  Param.Boxsize;
-    const float boxhalf = Param.Boxsize * 0.5;
-	const float pos_i[3] = {P[ipart].Pos[0],P[ipart].Pos[1],P[ipart].Pos[2]};
+	const double boxsize =  Param.Boxsize;
+    const double boxhalf = Param.Boxsize * 0.5;
+	const double pos_i[3] = {P[ipart].Pos[0],P[ipart].Pos[1],P[ipart].Pos[2]};
 
 	int node = 1;
 
@@ -34,9 +34,9 @@ int Find_ngb_tree(const int ipart, const float hsml, int ngblist[NGBMAX])
 
 	for (;;) {
     	
-		float dx = fabs(pos_i[0] - Tree[node].Pos[0]);
-        float dy = fabs(pos_i[1] - Tree[node].Pos[1]);
-        float dz = fabs(pos_i[2] - Tree[node].Pos[2]);
+		double dx = fabs(pos_i[0] - Tree[node].Pos[0]);
+        double dy = fabs(pos_i[1] - Tree[node].Pos[1]);
+        double dz = fabs(pos_i[2] - Tree[node].Pos[2]);
 			
         if (dx > boxhalf)
 	 	  	dx -= boxsize;
@@ -53,7 +53,7 @@ int Find_ngb_tree(const int ipart, const float hsml, int ngblist[NGBMAX])
 		else if (dz < -boxhalf)
 		    dz += boxsize;
 
-		float dl = 0.5 * sqrt3 * Tree[node].Size + hsml;
+		double dl = 0.5 * sqrt3 * Tree[node].Size + hsml;
 		
 		if (dx*dx + dy*dy + dz*dz < dl*dl) {
 
@@ -64,9 +64,9 @@ int Find_ngb_tree(const int ipart, const float hsml, int ngblist[NGBMAX])
 
 				for (int jpart = first; jpart < last; jpart++) { 
 				
-					float dx = fabs(pos_i[0] - P[jpart].Pos[0]);
-           			float dy = fabs(pos_i[1] - P[jpart].Pos[1]);
-           			float dz = fabs(pos_i[2] - P[jpart].Pos[2]);
+					double dx = fabs(pos_i[0] - P[jpart].Pos[0]);
+           			double dy = fabs(pos_i[1] - P[jpart].Pos[1]);
+           			double dz = fabs(pos_i[2] - P[jpart].Pos[2]);
 
         			if (dx > boxhalf)
 				 	  	dx -= boxsize;
@@ -83,7 +83,7 @@ int Find_ngb_tree(const int ipart, const float hsml, int ngblist[NGBMAX])
 					else if (dz < -boxhalf)
 		    			dz += boxsize;
 
-					float dl = 0.5 * sqrt3 * Tree[node].Size + hsml;
+					double dl = 0.5 * sqrt3 * Tree[node].Size + hsml;
 
 					if (dx*dx + dy*dy + dz*dz < hsml*hsml)
 						ngblist[ngbcnt++] = jpart;
@@ -110,12 +110,12 @@ int Find_ngb_tree(const int ipart, const float hsml, int ngblist[NGBMAX])
 	return ngbcnt;
 }
 
-extern float Guess_hsml(const size_t ipart, const int DesNumNgb)
+extern double Guess_hsml(const size_t ipart, const int DesNumNgb)
 {
 	int node = P[ipart].Tree_Parent;
 
-    float numDens = Tree[node].Npart / p3(Tree[node].Size);
-    float size = pow( fourpithird/numDens, 1./3.);
+    double numDens = Tree[node].Npart / p3(Tree[node].Size);
+    double size = pow( fourpithird/numDens, 1./3.);
     
 	return 2 * size;
 }
@@ -134,9 +134,9 @@ void Build_Tree()
 
 	int last_parent = 0;		// last parent of last particle
 
-	float px = P[0].Pos[0] / boxsize;
-	float py = P[0].Pos[1] / boxsize;
-	float pz = P[0].Pos[2] / boxsize;
+	double px = P[0].Pos[0] / boxsize;
+	double py = P[0].Pos[1] / boxsize;
+	double pz = P[0].Pos[2] / boxsize;
 		
 	peanoKey last_key = Reversed_Peano_Key(px, py, pz);
 	
@@ -301,7 +301,7 @@ static inline void create_node_from_particle(const int ipart,const int parent,
 	 			     	  -1 + 2 * (P[ipart].Pos[1] > Tree[parent].Pos[1]),
 	 			          -1 + 2 * (P[ipart].Pos[2] > Tree[parent].Pos[2]) }; 
 	
-	float size = Param.Boxsize / (1 << lvl);
+	double size = Param.Boxsize / (1 << lvl);
 
 	Tree[node].Size = size;
 

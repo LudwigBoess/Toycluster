@@ -197,8 +197,8 @@ static void set_subhalo_positions(int i)
 	double r = Halo[SUBHOST].R200 * 
 		inverted_subhalo_number_density_profile(q);
 
-	float theta = acos(2 *  erand48(Omp.Seed) - 1);
-   	float phi = 2*pi * erand48(Omp.Seed);
+	double theta = acos(2 *  erand48(Omp.Seed) - 1);
+   	double phi = 2*pi * erand48(Omp.Seed);
 
 	double x = r * sin(theta) * cos(phi);
     double y = r * sin(theta) * sin(phi);
@@ -212,9 +212,9 @@ static void set_subhalo_positions(int i)
 		z = Param.SubFirstPos[2] - z_host;
 	}
 #endif
-	Halo[i].D_CoM[0] = (float) (x + x_host);
-	Halo[i].D_CoM[1] = (float) (y + y_host);
-	Halo[i].D_CoM[2] = (float) (z + z_host);
+	Halo[i].D_CoM[0] = (double) (x + x_host);
+	Halo[i].D_CoM[1] = (double) (y + y_host);
+	Halo[i].D_CoM[2] = (double) (z + z_host);
 
 	return ;
 }

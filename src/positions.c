@@ -55,14 +55,14 @@ static void sample_DM_particles(const int i)
 
 		for (;;) { // Hernquist halo M(<R) inverted
 
-			float theta = acos(2 *  erand48(Omp.Seed) - 1);
-           	float phi = 2*pi * erand48(Omp.Seed);
+			double theta = acos(2 *  erand48(Omp.Seed) - 1);
+           	double phi = 2*pi * erand48(Omp.Seed);
 
-           	float sin_theta = sin(theta);
-           	float cos_theta = cos(theta);
+           	double sin_theta = sin(theta);
+           	double cos_theta = cos(theta);
 
-           	float sin_phi = sin(phi);
-           	float cos_phi = cos(phi);
+           	double sin_phi = sin(phi);
+           	double cos_phi = cos(phi);
 
            	double sqrt_q =  sqrt(erand48(Omp.Seed) * qmax);  
            	double r = Halo[i].A_hernq * sqrt_q / (1-sqrt_q);
@@ -74,9 +74,9 @@ static void sample_DM_particles(const int i)
 			if (i != Halo_containing(1, x+dCoM[0], y+dCoM[1], z+dCoM[2])) 
             	continue; // draw another one 
 			
-			Halo[i].DM[ipart].Pos[0] = (float) x;
-           	Halo[i].DM[ipart].Pos[1] = (float) y;
-           	Halo[i].DM[ipart].Pos[2] = (float) z;
+			Halo[i].DM[ipart].Pos[0] = (double) x;
+           	Halo[i].DM[ipart].Pos[1] = (double) y;
+           	Halo[i].DM[ipart].Pos[2] = (double) z;
 
 			Halo[i].DM[ipart].Type = 1;
 
@@ -119,9 +119,9 @@ static void sample_Gas_particles(const int i)
 			if ((z < -boxhalf) || (z > boxhalf))	
 				continue;
 
-            Halo[i].Gas[ipart].Pos[0] = (float) x;
-   	        Halo[i].Gas[ipart].Pos[1] = (float) y;
-       	    Halo[i].Gas[ipart].Pos[2] = (float) z;
+            Halo[i].Gas[ipart].Pos[0] = (double) x;
+   	        Halo[i].Gas[ipart].Pos[1] = (double) y;
+       	    Halo[i].Gas[ipart].Pos[2] = (double) z;
 
 			Halo[i].Gas[ipart].Type = 0;
 
@@ -143,7 +143,7 @@ void Show_mass_in_r200()
 {
     const double mSph = Param.Mpart[0]*Unit.Mass/Msol2cgs;
     const double mDM = Param.Mpart[1]*Unit.Mass/Msol2cgs;
-    const float boxhalf = Param.Boxsize / 2;
+    const double boxhalf = Param.Boxsize / 2;
 
 	int nShow = Sub.First;
 
@@ -159,17 +159,17 @@ void Show_mass_in_r200()
 			for (int j = Sub.First; j < Param.Nhalos; j++)
 				npart += Halo[j].Npart[0];
 
-        float rVir2 = p2(Halo[i].R200);
+        double rVir2 = p2(Halo[i].R200);
 
         size_t nSph = 0;
 
         for (size_t ipart = 0; ipart < npart; ipart++) {
             
-            float dx = Halo[i].Gas[ipart].Pos[0] - Halo[i].D_CoM[0] - boxhalf;
-            float dy = Halo[i].Gas[ipart].Pos[1] - Halo[i].D_CoM[1] - boxhalf;
-            float dz = Halo[i].Gas[ipart].Pos[2] - Halo[i].D_CoM[2] - boxhalf;
+            double dx = Halo[i].Gas[ipart].Pos[0] - Halo[i].D_CoM[0] - boxhalf;
+            double dy = Halo[i].Gas[ipart].Pos[1] - Halo[i].D_CoM[1] - boxhalf;
+            double dz = Halo[i].Gas[ipart].Pos[2] - Halo[i].D_CoM[2] - boxhalf;
 
-            float r2 = dx*dx + dy*dy + dz*dz;
+            double r2 = dx*dx + dy*dy + dz*dz;
             
             if (r2 < rVir2)
                 nSph++;
@@ -184,11 +184,11 @@ void Show_mass_in_r200()
         size_t nDM = 0;
         for (size_t ipart = 0; ipart < npart; ipart++) {
 
-            float dx = Halo[i].DM[ipart].Pos[0] - Halo[i].D_CoM[0] - boxhalf;
-            float dy = Halo[i].DM[ipart].Pos[1] - Halo[i].D_CoM[1] - boxhalf;
-            float dz = Halo[i].DM[ipart].Pos[2] - Halo[i].D_CoM[2] - boxhalf;
+            double dx = Halo[i].DM[ipart].Pos[0] - Halo[i].D_CoM[0] - boxhalf;
+            double dy = Halo[i].DM[ipart].Pos[1] - Halo[i].D_CoM[1] - boxhalf;
+            double dz = Halo[i].DM[ipart].Pos[2] - Halo[i].D_CoM[2] - boxhalf;
 
-            float r2 = dx*dx + dy*dy + dz*dz;
+            double r2 = dx*dx + dy*dy + dz*dz;
 
             if (r2 < rVir2)
                 nDM++;
@@ -263,7 +263,7 @@ void center_positions()
 
 void Reassign_particles_to_halos()
 {
-	const float boxhalf = 0.5 * Param.Boxsize;
+	const double boxhalf = 0.5 * Param.Boxsize;
 	int *haloID = Malloc( Param.Npart[0]*sizeof(*haloID) );
 
 	size_t npart[Param.Nhalos];
@@ -271,7 +271,7 @@ void Reassign_particles_to_halos()
 
    	for (size_t ipart = 0; ipart < Param.Npart[0]; ipart++) {
    	
-		float x = P[ipart].Pos[0] - boxhalf,
+		double x = P[ipart].Pos[0] - boxhalf,
 			  y = P[ipart].Pos[1] - boxhalf,
 			  z = P[ipart].Pos[2] - boxhalf;
 
@@ -330,7 +330,7 @@ void Reassign_particles_to_halos()
 
 /* check for collision between position xyz and clusters
  * via maximum of density for gas particles and sampling radius for DM */
-int Halo_containing(const int type, const float x, const float y, const float z)
+int Halo_containing(const int type, const double x, const double y, const double z)
 {
 	const double boxsize = Param.Boxsize;
 
@@ -341,7 +341,7 @@ int Halo_containing(const int type, const float x, const float y, const float z)
 
 	if (type > 0) { // DM
 
-		float r = sqrt(p2(x - Halo[1].D_CoM[0]) + p2(y - Halo[1].D_CoM[1])  
+		double r = sqrt(p2(x - Halo[1].D_CoM[0]) + p2(y - Halo[1].D_CoM[1])  
 				 + p2(z - Halo[1].D_CoM[2]));
 
 		if ( (r < Halo[1].R_Sample[1]) && (x > 0) )
@@ -349,7 +349,7 @@ int Halo_containing(const int type, const float x, const float y, const float z)
 
 		for (int j = Sub.First; j < Param.Nhalos; j++) { // 0 is std
 
-   	   		float r = sqrt(p2(x - Halo[j].D_CoM[0]) + p2(y - Halo[j].D_CoM[1])  
+   	   		double r = sqrt(p2(x - Halo[j].D_CoM[0]) + p2(y - Halo[j].D_CoM[1])  
 				 + p2(z - Halo[j].D_CoM[2]));
 
 			if (r < Halo[j].R_Sample[1]) {
@@ -369,7 +369,7 @@ int Halo_containing(const int type, const float x, const float y, const float z)
 			if (Halo[j].Is_Stripped)
 				continue; // stripped halos don't contain SPH particles !
 
-   	   		float r = sqrt(p2(x - Halo[j].D_CoM[0]) + p2(y - Halo[j].D_CoM[1])  
+   	   		double r = sqrt(p2(x - Halo[j].D_CoM[0]) + p2(y - Halo[j].D_CoM[1])  
 				 + p2(z - Halo[j].D_CoM[2]));
 
 			double rho_gas = Gas_density_profile(r, Halo[j].Rho0, Halo[j].Beta,

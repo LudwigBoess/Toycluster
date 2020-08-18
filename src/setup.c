@@ -343,7 +343,7 @@ void Setup()
 	return;
 }
 
-static double sph_kernel_wc2(const float r, const float h)
+static double sph_kernel_wc2(const double r, const double h)
 {
 	double u = r/h;
 	double t = fmax(1 - u, 0);
@@ -354,20 +354,20 @@ static double sph_kernel_wc2(const float r, const float h)
 /* set orbit */
 void Apply_kinematics()
 {
-    const float vx_host = Param.VelMerger[0];
-    const float vx_infa = Param.VelMerger[1];
+    const double vx_host = Param.VelMerger[0];
+    const double vx_infa = Param.VelMerger[1];
 
 #ifdef PARABOLA // move origin to R200 touch point 
-    float dx =  - Halo[1].D_CoM[0] + Param.Boxsize/2 +Halo[1].R200;
-    float dy =  - Halo[1].D_CoM[1] + Param.Boxsize/2;
-    float dz =  - Halo[1].D_CoM[2] + Param.Boxsize/2;
+    double dx =  - Halo[1].D_CoM[0] + Param.Boxsize/2 +Halo[1].R200;
+    double dy =  - Halo[1].D_CoM[1] + Param.Boxsize/2;
+    double dz =  - Halo[1].D_CoM[2] + Param.Boxsize/2;
 
 #pragma omp parallel for 
     for (size_t ipart = 0; ipart < Param.Ntotal; ipart++) {
 
-        float x = P[ipart].Pos[0] +dx; 
-        float y = P[ipart].Pos[1] +dy; 
-        float z = P[ipart].Pos[2] +dz; 
+        double x = P[ipart].Pos[0] +dx; 
+        double y = P[ipart].Pos[1] +dy; 
+        double z = P[ipart].Pos[2] +dz; 
 
         if ( y*y + z*z < x*x && (x > 0) )  // infalling cluster 
             P[ipart].Vel[0] += vx_infa;
@@ -380,11 +380,11 @@ void Apply_kinematics()
 	
 	const double boxhalf = Param.Boxsize/2;
     
-	const float x0 = Halo[1].D_CoM[0] + boxhalf;
-    const float y0 = Halo[1].D_CoM[1] + boxhalf;
-    const float z0 = Halo[1].D_CoM[2] + boxhalf;
+	const double x0 = Halo[1].D_CoM[0] + boxhalf;
+    const double y0 = Halo[1].D_CoM[1] + boxhalf;
+    const double z0 = Halo[1].D_CoM[2] + boxhalf;
 
-    const float rVir2 = p2(Halo[1].R200);
+    const double rVir2 = p2(Halo[1].R200);
 
 	const double h = Halo[1].R_Sample[0];
 	const double norm = sph_kernel_wc2(0, h);
@@ -392,12 +392,12 @@ void Apply_kinematics()
 	#pragma omp parallel for 
     for (size_t ipart = 0; ipart < Param.Ntotal; ipart++) {
 
-        float dx = P[ipart].Pos[0] - x0;
-        float dy = P[ipart].Pos[1] - y0;
-        float dz = P[ipart].Pos[2] - z0;
+        double dx = P[ipart].Pos[0] - x0;
+        double dy = P[ipart].Pos[1] - y0;
+        double dz = P[ipart].Pos[2] - z0;
 
-        float r2_cyl = p2(dy) + p2(dz);
-        float r2 = p2(dx) + p2(dy) + p2(dz);
+        double r2_cyl = p2(dy) + p2(dz);
+        double r2 = p2(dx) + p2(dy) + p2(dz);
 
         if( ((dx > 0) && (r2_cyl < rVir2)) || (r2 < rVir2) ) {
 
@@ -426,8 +426,8 @@ void Apply_kinematics()
 /* center the simulation in the periodic box */
 void Shift_Origin()
 {
-    const float boxsize = Param.Boxsize;
-    const float boxHalf = boxsize / 2;
+    const double boxsize = Param.Boxsize;
+    const double boxHalf = boxsize / 2;
 
 	printf("Shift Origin "); fflush(stdout);
 
@@ -435,13 +435,13 @@ void Shift_Origin()
         
 		printf("."); fflush(stdout);
 
-        float dx = Halo[i].D_CoM[0];
-        float dy = Halo[i].D_CoM[1];
-        float dz = Halo[i].D_CoM[2];
+        double dx = Halo[i].D_CoM[0];
+        double dy = Halo[i].D_CoM[1];
+        double dz = Halo[i].D_CoM[2];
 
-        float vx = Halo[i].BulkVel[0];
-        float vy = Halo[i].BulkVel[1];
-        float vz = Halo[i].BulkVel[2];
+        double vx = Halo[i].BulkVel[0];
+        double vy = Halo[i].BulkVel[1];
+        double vz = Halo[i].BulkVel[2];
 
 #pragma omp parallel for // DM
         for (size_t ipart=0; ipart<Halo[i].Npart[1]; ipart++) {

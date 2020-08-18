@@ -25,9 +25,9 @@ void Make_temperatures()
 		#pragma omp parallel for
         for (int ipart = 0; ipart < Halo[i].Npart[0]; ipart++) {
 
-            float dx = Halo[i].Gas[ipart].Pos[0] - Halo[i].D_CoM[0] - boxhalf;
-            float dy = Halo[i].Gas[ipart].Pos[1] - Halo[i].D_CoM[1] - boxhalf;
-            float dz = Halo[i].Gas[ipart].Pos[2] - Halo[i].D_CoM[2] - boxhalf;
+            double dx = Halo[i].Gas[ipart].Pos[0] - Halo[i].D_CoM[0] - boxhalf;
+            double dy = Halo[i].Gas[ipart].Pos[1] - Halo[i].D_CoM[1] - boxhalf;
+            double dz = Halo[i].Gas[ipart].Pos[2] - Halo[i].D_CoM[2] - boxhalf;
 
             double r = sqrt(dx*dx + dy*dy + dz*dz);
 

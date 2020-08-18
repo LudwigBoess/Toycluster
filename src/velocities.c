@@ -10,13 +10,13 @@ static void calc_distribution_function_table(int);
 static void setup_potential_profile(int);
 static double distribution_function(const double);
 static double eddington_integrant(double, void *);
-static double potential_profile(const int, const float);
+static double potential_profile(const int, const double);
 static double gas_potential_profile(const int i, const double r);
-static double gas_potential_profile_23(const int i, const float r);
-static double dm_density_profile(const int, const float);
-static double dm_potential_profile(const int, const float);
+static double gas_potential_profile_23(const int i, const double r);
+static double dm_density_profile(const int, const double);
+static double dm_potential_profile(const int, const double);
 static double hernquist_distribution_func(const int, const double);
-static double sph_kernel_wc2(const float r, const float h);
+static double sph_kernel_wc2(const double r, const double h);
 
 #ifdef SUBSTRUCTURE
 static void set_subhalo_bulk_velocities();
@@ -97,9 +97,9 @@ void Make_velocities()
             double theta = acos(2 *  erand48(Omp.Seed) - 1);
             double phi = 2*pi * erand48(Omp.Seed);
         
-            Halo[i].DM[ipart].Vel[0] = (float) (v * sin(theta) * cos(phi));
-            Halo[i].DM[ipart].Vel[1] = (float) (v * sin(theta) * sin(phi));
-            Halo[i].DM[ipart].Vel[2] = (float) (v * cos(theta));
+            Halo[i].DM[ipart].Vel[0] = (double) (v * sin(theta) * cos(phi));
+            Halo[i].DM[ipart].Vel[1] = (double) (v * sin(theta) * sin(phi));
+            Halo[i].DM[ipart].Vel[2] = (double) (v * cos(theta));
 
         } // for ipart
 
@@ -158,7 +158,7 @@ void Make_velocities()
     return;
 }
 
-static double sph_kernel_wc2(const float r, const float h)
+static double sph_kernel_wc2(const double r, const double h)
 {
 	double u = r/h;
 	double t = fmax(1 - u, 0);
@@ -177,7 +177,7 @@ static double distribution_function(const double E)
  * numerical integration of the Eddington equation.
  * We interpolate rho(psi) with an cubic spline using the GSL library and
  * get the second derivative from the spline directly. This is a hard 1D 
- * integral to get to floating point precision ! We disable the GSL error
+ * integral to get to doubleing point precision ! We disable the GSL error
  * handler, because target accuracy can't always be reached. The Hernquist
  * f(E) is reproduce with a few 1e-3 accuracy ...
  * Kazantzidis+ 2004, Binney 1982, Binney & Tremaine pp. 298, Barnes 02 
@@ -270,11 +270,11 @@ static void calc_distribution_function_table(int iCluster)
 
 	gsl_set_error_handler(old_handler);
 
-	#pragma omp parallel
-	{
+	//#pragma omp parallel
+	//{
 	fE_params.acc = gsl_interp_accel_alloc();
 	fE_params.spline = gsl_spline_alloc(gsl_interp_cspline, NTABLE);
-	}
+	//}
 	
 	for (int i = 0; i < NTABLE; i++) {
 		
@@ -283,7 +283,7 @@ static void calc_distribution_function_table(int iCluster)
 		y[i] = fE[NTABLE-i-1];
 	}
 
-	#pragma omp parallel
+	//#pragma omp parallel
 	gsl_spline_init(fE_params.spline, x, y, NTABLE);
 	
 /*	for (int i = 0; i < NTABLE; i++) {
@@ -320,12 +320,12 @@ static double eddington_integrant(double psi, void *params)
 	return result;
 }
 
-static double potential_profile(const int i, const float r)
+static double potential_profile(const int i, const double r)
 {
 	double psi = dm_potential_profile(i, r); // DM generated potential
 	
 	if (Halo[i].Npart[0]) // Gas generated potential
-		psi += gas_potential_profile(i,r);  // exponential cut off near rcut
+		psi += gas_potential_profile_23(i,r);  // exponential cut off near rcut
 
 	return psi; 
 }
@@ -334,7 +334,7 @@ static double potential_profile(const int i, const float r)
  * Hernquist 1989, eq. 2 , eq. 17-19
  */
 
-static double dm_density_profile(const int i, const float r)
+static double dm_density_profile(const int i, const double r)
 {
     const double a = Halo[i].A_hernq;
     const double m = Halo[i].Mass[1]; 
@@ -357,7 +357,7 @@ static double hernquist_distribution_func(const int iCluster, const double E)
 	return f_E;
 }
 
-double dm_potential_profile(const int i, const float r)
+double dm_potential_profile(const int i, const double r)
 {
     const double a = Halo[i].A_hernq;
     const double mDM = Halo[i].Mass[1]; 
@@ -446,7 +446,7 @@ static double gas_potential_profile(const int i, const double r)
 	return psi_max*r_max/r;
 }
 
-static double gas_potential_profile_23(const int i, const float r)
+static double gas_potential_profile_23(const int i, const double r)
 {
 	if (r > 2*Halo[i].Rcut)
 		return 0;
@@ -508,7 +508,7 @@ static double gas_potential_profile_23(const int i, const float r)
 
 void set_subhalo_bulk_velocities()
 {
-	const float d0[3] = {Halo[SUBHOST].D_CoM[0], Halo[SUBHOST].D_CoM[1], 
+	const double d0[3] = {Halo[SUBHOST].D_CoM[0], Halo[SUBHOST].D_CoM[1], 
 						Halo[SUBHOST].D_CoM[2]};
 
 	printf("\n");
@@ -517,9 +517,9 @@ void set_subhalo_bulk_velocities()
 		
 		double M = Halo[i].Mtotal;
                
-        float dx = Halo[i].D_CoM[0] - d0[0];
-        float dy = Halo[i].D_CoM[1] - d0[1];
-        float dz = Halo[i].D_CoM[2] - d0[2];
+        double dx = Halo[i].D_CoM[0] - d0[0];
+        double dy = Halo[i].D_CoM[1] - d0[1];
+        double dz = Halo[i].D_CoM[2] - d0[2];
 		
 		double r = sqrt(dx*dx + dy*dy + dz*dz); 
 
@@ -552,9 +552,9 @@ void set_subhalo_bulk_velocities()
 
 		v *= Param.Zero_Energy_Orbit_Fraction;
 
-        Halo[i].BulkVel[0] = (float) (v * sin(theta) * cos(phi));
-        Halo[i].BulkVel[1] = (float) (v * sin(theta) * sin(phi));
-        Halo[i].BulkVel[2] = (float) (v * cos(theta));
+        Halo[i].BulkVel[0] = (double) (v * sin(theta) * cos(phi));
+        Halo[i].BulkVel[1] = (double) (v * sin(theta) * sin(phi));
+        Halo[i].BulkVel[2] = (double) (v * cos(theta));
 
 		printf("Sub=%d v=%g r=%g cs=%g Gas Stripped ?=%d\n",
 				i, v, r/Halo[SUBHOST].R200, cs, Halo[i].Is_Stripped);

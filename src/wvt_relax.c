@@ -7,13 +7,13 @@
 #define NUMITER 64
 #define ERRDIFF_LIMIT 0.01
 
-int Find_ngb_simple(const int ipart,  const float hsml, int *ngblist);
+int Find_ngb_simple(const int ipart,  const double hsml, int *ngblist);
 int ngblist[NGBMAX] = { 0 }, Ngbcnt ;
 
-static inline float sph_kernel_M4(const float r, const float h);
-static inline double sph_kernel_WC2(const float r, const float h);
-static inline double sph_kernel_WC6(const float r, const float h);
-static inline float gravity_kernel(const float r, const float h);
+static inline double sph_kernel_M4(const double r, const double h);
+static inline double sph_kernel_WC2(const double r, const double h);
+static inline double sph_kernel_WC6(const double r, const double h);
+static inline double gravity_kernel(const double r, const double h);
 
 /* 
  * Settle SPH particle with weighted Voronoi tesselations (Diehl+ 2012).
@@ -33,11 +33,11 @@ void Regularise_sph_particles()
 			"   stop at  errmax < %g%%   \n\n",
 			NUMITER, TREEBUILDFREQUENCY, ERRDIFF_LIMIT*100); fflush(stdout);
 
-    float *hsml = NULL;
+    double *hsml = NULL;
     size_t nBytes = nPart * sizeof(*hsml);
     hsml = Malloc(nBytes);
     
-    float *delta[3] = { NULL }; 
+    double *delta[3] = { NULL }; 
     nBytes = nPart * sizeof(**delta);
     delta[0] = Malloc(nBytes);
     delta[1] = Malloc(nBytes);
@@ -73,9 +73,9 @@ void Regularise_sph_particles()
 		#pragma omp parallel for reduction(+:errMean,nIn) reduction(max:errMax)
         for (int  ipart = 0; ipart < nPart; ipart++) { // get error
 
-        	float rho = Global_density_model(ipart);
+        	double rho = Global_density_model(ipart);
 
-            float err = fabs(SphP[ipart].Rho-rho) / rho;
+            double err = fabs(SphP[ipart].Rho-rho) / rho;
 
             errMax = fmax(err, errMax);
 
@@ -108,7 +108,7 @@ void Regularise_sph_particles()
 		#pragma omp parallel for shared(hsml) reduction(+:vSphSum)
         for (int ipart = 0; ipart < nPart; ipart++) { // find hsml
 
-            float rho = Global_density_model(ipart);
+            double rho = Global_density_model(ipart);
 
 			SphP[ipart].Rho_Model= rho;
 
@@ -117,7 +117,7 @@ void Regularise_sph_particles()
             vSphSum += p3(hsml[ipart]);
         }
 
-        float norm_hsml = pow(WVTNNGB/vSphSum/fourpithird , 1.0/3.0);
+        double norm_hsml = pow(WVTNNGB/vSphSum/fourpithird , 1.0/3.0);
     
 		#pragma omp parallel for
         for (int ipart = 0; ipart < nPart; ipart++) 
@@ -141,9 +141,9 @@ void Regularise_sph_particles()
                 if (ipart == jpart)
                     continue;
 
-                float dx = (P[ipart].Pos[0] - P[jpart].Pos[0]) * boxinv;
-	    		float dy = (P[ipart].Pos[1] - P[jpart].Pos[1]) * boxinv;
-    		    float dz = (P[ipart].Pos[2] - P[jpart].Pos[2]) * boxinv;
+                double dx = (P[ipart].Pos[0] - P[jpart].Pos[0]) * boxinv;
+	    		double dy = (P[ipart].Pos[1] - P[jpart].Pos[1]) * boxinv;
+    		    double dz = (P[ipart].Pos[2] - P[jpart].Pos[2]) * boxinv;
 			
                 dx = dx > 0.5 ? dx-1 : dx; // find closest image
                 dy = dy > 0.5 ? dy-1 : dy;
@@ -153,16 +153,16 @@ void Regularise_sph_particles()
                 dy = dy < -0.5 ? dy+1 : dy;
                 dz = dz < -0.5 ? dz+1 : dz; 
 
-                float r2 = (dx*dx + dy*dy + dz*dz);
+                double r2 = (dx*dx + dy*dy + dz*dz);
                 
-                float h = 0.5 * (hsml[ipart] + hsml[jpart]);
+                double h = 0.5 * (hsml[ipart] + hsml[jpart]);
 
     		    if (r2 > p2(h)) 
                     continue ;
 
-    		    float r = sqrt(r2);
+    		    double r = sqrt(r2);
 
-		        float wk = sph_kernel_WC6(r, h);
+		        double wk = sph_kernel_WC6(r, h);
                 
 				delta[0][ipart] += step * hsml[ipart] * wk * dx/r;
                 delta[1][ipart] += step * hsml[ipart] * wk * dy/r;
@@ -176,12 +176,12 @@ void Regularise_sph_particles()
 			reduction(+:cnt) reduction(+:cnt1) reduction(+:cnt2)
         for (int ipart = 0; ipart < nPart; ipart++) { // move particles
 
-            float rho = Global_density_model(ipart);
+            double rho = Global_density_model(ipart);
 
-			float d = boxsize * sqrt(p2(delta[0][ipart]) 
+			double d = boxsize * sqrt(p2(delta[0][ipart]) 
 					+ p2( delta[1][ipart]) + p2( delta[2][ipart]));
 
-			float meanPartSep = pow(Param.Mpart[0] / rho / DESNNGB, 1.0/3.0);
+			double meanPartSep = pow(Param.Mpart[0] / rho / DESNNGB, 1.0/3.0);
 
 			if (d > 1 * meanPartSep) 
 				cnt++;
@@ -190,9 +190,9 @@ void Regularise_sph_particles()
 			if (d > 0.01 * meanPartSep) 
 				cnt2++;
 
-            P[ipart].Pos[0] += (float) (delta[0][ipart] * boxsize);
-            P[ipart].Pos[1] += (float) (delta[1][ipart] * boxsize);
-            P[ipart].Pos[2] += (float) (delta[2][ipart] * boxsize);
+            P[ipart].Pos[0] += (double) (delta[0][ipart] * boxsize);
+            P[ipart].Pos[1] += (double) (delta[1][ipart] * boxsize);
+            P[ipart].Pos[2] += (double) (delta[2][ipart] * boxsize);
 
             while (P[ipart].Pos[0] < 0) // keep it in the box
                 P[ipart].Pos[0] += boxsize;
@@ -224,7 +224,7 @@ void Regularise_sph_particles()
     return ;
 }
 
-float Global_density_model(const int ipart)
+double Global_density_model(const int ipart)
 {
     const double boxhalf = Param.Boxsize*0.5;
 	const double x = P[ipart].Pos[0], y = P[ipart].Pos[1], 
@@ -255,24 +255,24 @@ float Global_density_model(const int ipart)
     return rho;
 }
     
-static inline double sph_kernel_WC2(const float r, const float h)
+static inline double sph_kernel_WC2(const double r, const double h)
 {   
-	const float u= r/h;
-    const float t = 1-u;
+	const double u= r/h;
+    const double t = 1-u;
 
     return 21/(2*pi)*t*t*t*t*(1+4*u);
 }
 
-static inline float gravity_kernel(const float r, const float h)
+static inline double gravity_kernel(const double r, const double h)
 {
-    const float epsilon = 0.1;
-    const float offset = h / (h + epsilon);
-    const float val = h / (r + epsilon) - offset;
+    const double epsilon = 0.1;
+    const double offset = h / (h + epsilon);
+    const double val = h / (r + epsilon) - offset;
 
     return val * val;
 }
 
-static inline double sph_kernel_WC6(const float r, const float h)
+static inline double sph_kernel_WC6(const double r, const double h)
 {   
 	const double u = r/h;
     const double t = 1-u;
@@ -280,7 +280,7 @@ static inline double sph_kernel_WC6(const float r, const float h)
     return 1365.0/(64*pi) *t*t*t*t*t*t*t*t*(1+8*u + 25*u*u + 32*u*u*u);
 }
 
-static inline float sph_kernel_M4(const float r, const float h) // cubic spline
+static inline double sph_kernel_M4(const double r, const double h) // cubic spline
 {
 	double wk = 0;
    	double u = r/h;
@@ -293,10 +293,10 @@ static inline float sph_kernel_M4(const float r, const float h) // cubic spline
 	return wk/p3(h);
 }
 
-int Find_ngb_simple(const int ipart,  const float hsml, int *ngblist)
+int Find_ngb_simple(const int ipart,  const double hsml, int *ngblist)
 {
-    const float boxhalf = Param.Boxsize/2;
-    const float boxsize = Param.Boxsize;
+    const double boxhalf = Param.Boxsize/2;
+    const double boxsize = Param.Boxsize;
 
     int ngbcnt = 0;
 
@@ -305,9 +305,9 @@ int Find_ngb_simple(const int ipart,  const float hsml, int *ngblist)
     
 	for (int jpart=0; jpart < Param.Npart[0]; jpart++) {
         
-        float dx = (P[ipart].Pos[0] - P[jpart].Pos[0]);
-        float dy = (P[ipart].Pos[1] - P[jpart].Pos[1]);
-        float dz = (P[ipart].Pos[2] - P[jpart].Pos[2]);
+        double dx = (P[ipart].Pos[0] - P[jpart].Pos[0]);
+        double dy = (P[ipart].Pos[1] - P[jpart].Pos[1]);
+        double dz = (P[ipart].Pos[2] - P[jpart].Pos[2]);
 
         if (dx > boxhalf)	// find closest image 
 			dx -= boxsize;
@@ -327,7 +327,7 @@ int Find_ngb_simple(const int ipart,  const float hsml, int *ngblist)
 		if (dz < -boxhalf)
 			dz += boxsize;
 
-    	float r2 = dx*dx + dy*dy + dz*dz;
+    	double r2 = dx*dx + dy*dy + dz*dz;
 
         if (r2 < hsml*hsml) 
 			ngblist[ngbcnt++] = jpart;

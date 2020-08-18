@@ -4,11 +4,11 @@
 
 #define JUMPTOLERANCE (0.05)
 
-static inline float sph_kernel_M4(const float r, const float h);
-static inline float sph_kernel_derivative_M4(const float r, const float h);
+static inline double sph_kernel_M4(const double r, const double h);
+static inline double sph_kernel_derivative_M4(const double r, const double h);
 
-static inline float sph_kernel_WC6(const float r, const float h);
-static inline float sph_kernel_derivative_WC6(const float r, const float h);
+static inline double sph_kernel_WC6(const double r, const double h);
+static inline double sph_kernel_derivative_WC6(const double r, const double h);
 
 extern void Find_sph_quantities() 
 {
@@ -20,7 +20,7 @@ extern void Find_sph_quantities()
         schedule(dynamic, Param.Npart[0]/Omp.NThreads/64)
     for (size_t ipart = 0; ipart<Param.Npart[0]; ipart++) {  
         
-		float hsml = SphP[ipart].Hsml;
+		double hsml = SphP[ipart].Hsml;
 
         if (hsml == 0)
             hsml = 2*Guess_hsml(ipart, DESNNGB); // always too large
@@ -28,8 +28,8 @@ extern void Find_sph_quantities()
 		Assert(isfinite(hsml), "hsml not finite ipart=%d parent=%d \n", 
 				ipart, P[ipart].Tree_Parent);
 
-        float dRhodHsml = 0;
-        float rho = 0;
+        double dRhodHsml = 0;
+        double rho = 0;
 
 		int it = 0;
         
@@ -63,7 +63,7 @@ extern void Find_sph_quantities()
                 break;
         }
 
-        float varHsmlFac = 1.0 / ( 1 + hsml/(3*rho)* dRhodHsml );
+        double varHsmlFac = 1.0 / ( 1 + hsml/(3*rho)* dRhodHsml );
 
         SphP[ipart].Hsml = hsml;
         SphP[ipart].Rho = rho;
@@ -78,7 +78,7 @@ extern void Find_sph_quantities()
  * solve SPH continuity eq via Newton-Raphson, bisection and tree search 
  */
 extern bool Find_hsml(const int ipart, const int *ngblist, const int ngbcnt,
-        float *dRhodHsml_out, float *hsml_out, float *rho_out)
+        double *dRhodHsml_out, double *hsml_out, double *rho_out)
 {
     const double boxhalf = 0.5 * Param.Boxsize;
     const double boxsize = Param.Boxsize;
@@ -195,13 +195,13 @@ extern bool Find_hsml(const int ipart, const int *ngblist, const int ngbcnt,
 		}
     } // for(;;)
     
-    *hsml_out = (float) hsml;
-    *rho_out = (float) rho;
+    *hsml_out = (double) hsml;
+    *rho_out = (double) rho;
 
 #ifndef SPH_CUBIC_SPLINE
     if (part_done) {
     
-        *dRhodHsml_out = (float) dRhodHsml;
+        *dRhodHsml_out = (double) dRhodHsml;
 
         double bias_corr = -0.0116 * pow(DESNNGB*0.01, -2.236) 
             * Param.Mpart[0] * sph_kernel_WC6(0, hsml); // WC6 (Dehnen+ 12)
@@ -289,9 +289,9 @@ extern void Bfld_from_rotA_SPH()
 			bfld[2] += weight * (dy*dAx - dx*dAy);
 		}
 
-        SphP[ipart].Bfld[0] = (float) bfld[0];
-		SphP[ipart].Bfld[1] = (float) bfld[1];
-		SphP[ipart].Bfld[2] = (float) bfld[2];
+        SphP[ipart].Bfld[0] = (double) bfld[0];
+		SphP[ipart].Bfld[1] = (double) bfld[1];
+		SphP[ipart].Bfld[2] = (double) bfld[2];
 	}
 
     printf(" done \n\n");fflush(stdout);
@@ -301,18 +301,18 @@ extern void Bfld_from_rotA_SPH()
 
 extern void Smooth_SPH_quantities()
 {
-	const float mpart = Param.Mpart[0];
-	const float boxhalf = Param.Boxsize / 2;
-    const float boxsize = Param.Boxsize;
+	const double mpart = Param.Mpart[0];
+	const double boxhalf = Param.Boxsize / 2;
+    const double boxsize = Param.Boxsize;
 
 	printf("Smoothing Sph Quantities,"); fflush(stdout);
 
-	size_t nBytes = Param.Npart[0] * sizeof(float);
+	size_t nBytes = Param.Npart[0] * sizeof(double);
 	
-	float *uArr = Malloc(nBytes);
+	double *uArr = Malloc(nBytes);
 	memset(uArr, 0, nBytes);
 
-	float *velArr[3] = { NULL }; 
+	double *velArr[3] = { NULL }; 
 	velArr[0] = Malloc(nBytes);
 	velArr[1] = Malloc(nBytes);
 	velArr[2] = Malloc(nBytes);
@@ -328,10 +328,10 @@ extern void Smooth_SPH_quantities()
 		int ngblist[NGBMAX] = { 0 };
 	    int ngbcnt = Find_ngb_tree(ipart, SphP[ipart].Hsml, ngblist);
 
-        float varHsmlFac = SphP[ipart].VarHsmlFac;
-        float hsml = SphP[ipart].Hsml;
-        float rho_i = SphP[ipart].Rho;
-        float *pos_i = P[ipart].Pos;
+        double varHsmlFac = SphP[ipart].VarHsmlFac;
+        double hsml = SphP[ipart].Hsml;
+        double rho_i = SphP[ipart].Rho;
+        double *pos_i = P[ipart].Pos;
 		
 		double wk_u = 0, wk_vel[3] = { 0 },  wk_total = 0;
 		
@@ -342,9 +342,9 @@ extern void Smooth_SPH_quantities()
             if (jpart == ipart)
                 continue;
 
-			float dx = pos_i[0] - P[jpart].Pos[0];
-			float dy = pos_i[1] - P[jpart].Pos[1];
-			float dz = pos_i[2] - P[jpart].Pos[2];
+			double dx = pos_i[0] - P[jpart].Pos[0];
+			double dy = pos_i[1] - P[jpart].Pos[1];
+			double dz = pos_i[2] - P[jpart].Pos[2];
 			
 			if (dx > boxhalf)	// find closest image 
 				dx -= boxsize;
@@ -364,20 +364,20 @@ extern void Smooth_SPH_quantities()
 			if (dz < -boxhalf)
 				dz += boxsize;
 
-            float r2 = p2(dx) + p2(dy) + p2(dz);
+            double r2 = p2(dx) + p2(dy) + p2(dz);
 
 			if (r2 > hsml*hsml) 
                 continue ;
                 
-			float r = sqrtf(r2);
+			double r = sqrtf(r2);
 
 #ifdef SPH_CUBIC_SPLINE
-			float dwk = sph_kernel_derivative_M4(r, hsml);
+			double dwk = sph_kernel_derivative_M4(r, hsml);
 #else
-			float dwk = sph_kernel_derivative_WC6(r, hsml);
+			double dwk = sph_kernel_derivative_WC6(r, hsml);
 #endif // SPH_CUBIC_SPLINE
 
-			float weight = -mpart/rho_i * dwk / r  * varHsmlFac;
+			double weight = -mpart/rho_i * dwk / r  * varHsmlFac;
 
 			wk_total += weight;
 
@@ -393,7 +393,7 @@ extern void Smooth_SPH_quantities()
 		wk_vel[1] /= wk_total;
 		wk_vel[2] /= wk_total;
 		
-		float u_err = fabs(wk_u - SphP[ipart].U);
+		double u_err = fabs(wk_u - SphP[ipart].U);
 
 		if ( u_err > JUMPTOLERANCE ) // replace with kernel weighted U
 			uArr[ipart] = wk_u;
@@ -423,7 +423,7 @@ extern void Smooth_SPH_quantities()
 }
 
 
-static inline float sph_kernel_WC6(const float r, const float h)
+static inline double sph_kernel_WC6(const double r, const double h)
 {   
 	const double u= r/h;
     const double t = 1-u;
@@ -431,15 +431,15 @@ static inline float sph_kernel_WC6(const float r, const float h)
     return 1365.0/(64*pi)/p3(h) *t*t*t*t*t*t*t*t*(1+8*u + 25*u*u + 32*u*u*u);
 }
 
-static inline float sph_kernel_derivative_WC6(const float r, const float h)
+static inline double sph_kernel_derivative_WC6(const double r, const double h)
 {   
-	const float u = r/h;
+	const double u = r/h;
     const double t = 1-u;
 
     return 1365.0/(64*pi)/(h*h*h*h) * -22.0 *t*t*t*t*t*t*t*u*(16*u*u+7*u+1);
 }
 
-static inline float sph_kernel_M4(const float r, const float h) // cubic spline
+static inline double sph_kernel_M4(const double r, const double h) // cubic spline
 {
 	double wk = 0;
    	double u = r/h;
@@ -452,7 +452,7 @@ static inline float sph_kernel_M4(const float r, const float h) // cubic spline
 	return wk/p3(h);
 }
 
-static inline float sph_kernel_derivative_M4(const float r, const float h)
+static inline double sph_kernel_derivative_M4(const double r, const double h)
 {
 	double dwk = 0;
 	double u = r/h;

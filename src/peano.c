@@ -291,7 +291,7 @@ void test_peanokey()
 	const double box[3]  = { 1.0, 1, 1};
 	double a[3] = { 0 };
 	int order = 1;
-	float delta = 1/pow(2.0, order);
+	double delta = 1/pow(2.0, order);
 	int n = roundf(1/delta);
 
 	for (int i = 0; i < n; i++)

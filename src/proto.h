@@ -42,8 +42,8 @@ double Invert_Mass_Profile(double);
 double Mass_profile_23(const double, const int); 
 double Gas_density_profile(const double, const double, const double, 
 		const double, const double, const bool); 
-int Halo_containing(const int, const float,const float,const float);
-float Global_density_model(const int);
+int Halo_containing(const int, const double,const double,const double);
+double Global_density_model(const int);
 void Setup_Mass_Profile(const int);
 
 
@@ -57,7 +57,7 @@ void Assert_Info(const char *func, const char *file, int line, int64_t expr,
         const char *errmsg, ...);
 double U2T(double U);
 double T2U(double T);
-double Density(float rho);
+double Density(double rho);
 
 /* Cosmo */
 double Redshift2Time(const double);

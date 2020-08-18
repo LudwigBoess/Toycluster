@@ -30,7 +30,7 @@ double T2U(double T)
 		mean_mol_weight / k_B));
 }
 
-double Density(float rho)
+double Density(double rho)
 {
     return( ((double)rho) * Unit.Mass / p3(Unit.Length) );
 }

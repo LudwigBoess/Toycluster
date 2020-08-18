@@ -140,30 +140,30 @@ void fill_write_buffer(enum iofields blocknr, void *wbuf,
     switch (blocknr) {
     	case IO_POS:
             for (i=0; i<3; i++)
-                ((float *)wbuf)[ibuf+i] = P[ipart].Pos[i]; 
+                ((float *)wbuf)[ibuf+i] = (float) P[ipart].Pos[i]; 
         break;
         case IO_VEL:
             for (i=0; i<3; i++)
-                ((float *)wbuf)[ibuf+i] = P[ipart].Vel[i]; 
+                ((float *)wbuf)[ibuf+i] = (float) P[ipart].Vel[i]; 
         break;
         case IO_ID:
             ((unsigned int *)wbuf)[ibuf] = P[ipart].ID; 
         break;
         case IO_RHO:
-            ((float *)wbuf)[ibuf] = SphP[ipart].Rho; 
+            ((float *)wbuf)[ibuf] = (float) SphP[ipart].Rho; 
         break;
         case IO_RHOMODEL:
-            ((float *)wbuf)[ibuf] = SphP[ipart].Rho_Model; 
+            ((float *)wbuf)[ibuf] = (float) SphP[ipart].Rho_Model; 
         break;
         case IO_HSML:
-            ((float *)wbuf)[ibuf] = SphP[ipart].Hsml; 
+            ((float *)wbuf)[ibuf] = (float) SphP[ipart].Hsml; 
         break;
         case IO_U:
-            ((float *)wbuf)[ibuf] = SphP[ipart].U; 
+            ((float *)wbuf)[ibuf] = (float) SphP[ipart].U; 
         break;
         case IO_BFLD:
             for (i=0; i<3; i++)
-                ((float *)wbuf)[ibuf+i] = SphP[ipart].Bfld[i]; 
+                ((float *)wbuf)[ibuf+i] = (float) SphP[ipart].Bfld[i]; 
         break;
         default:
             Assert(0, "Block not found %d",blocknr);

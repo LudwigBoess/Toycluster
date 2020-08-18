@@ -13,9 +13,9 @@ static void refine(const size_t, size_t*, size_t*);
 struct tree_node{
     size_t down;        // To first daughter node or target part
     size_t next;        // To next subnode of father or to unkle 
-    float pos[3];       // Center of node 
+    double pos[3];       // Center of node 
     int npart;          // Number of particles in node 
-    float size;         // Spatial extent of node 
+    double size;         // Spatial extent of node 
 } *tree;
 
 static size_t max_tree_size, treesize; // Number of nodes in tree 
@@ -29,7 +29,7 @@ extern void Build_tree()
 		size_t node = 0;
         size_t parent = 0;
 
-        const float pos_i[3] = { P[ipart].Pos[0], P[ipart].Pos[1],
+        const double pos_i[3] = { P[ipart].Pos[0], P[ipart].Pos[1],
             P[ipart].Pos[2] };
 
         for (;;) {
@@ -80,7 +80,7 @@ extern void Build_tree()
  * for NNGB neighbours 
  */
 
-extern float Guess_hsml(const size_t ipart, const int DesNumNgb)
+extern double Guess_hsml(const size_t ipart, const int DesNumNgb)
 {
     int node = 0;
     int nextnode = tree[node].down + pos2idx(ipart,node);
@@ -92,8 +92,8 @@ extern float Guess_hsml(const size_t ipart, const int DesNumNgb)
         nextnode = tree[node].down + pos2idx(ipart,node);
     }
 
-    float numDens = tree[node].npart / p3(tree[node].size);
-    float size = pow( fourpithird/numDens, 1./3.);
+    double numDens = tree[node].npart / p3(tree[node].size);
+    double size = pow( fourpithird/numDens, 1./3.);
 
     return size;
 }
@@ -102,11 +102,11 @@ extern float Guess_hsml(const size_t ipart, const int DesNumNgb)
  * Find neighbours closer than hsml via the tree, periodic version.
  */
 
-extern int Find_ngb_tree(const size_t ipart, const float hsml, int *ngblist)
+extern int Find_ngb_tree(const size_t ipart, const double hsml, int *ngblist)
 {
-    const float boxsize =  Param.Boxsize;
-    const float boxhalf = Param.Boxsize * 0.5;
-    const float pos_i[3] = {P[ipart].Pos[0],P[ipart].Pos[1],P[ipart].Pos[2] };
+    const double boxsize =  Param.Boxsize;
+    const double boxhalf = Param.Boxsize * 0.5;
+    const double pos_i[3] = {P[ipart].Pos[0],P[ipart].Pos[1],P[ipart].Pos[2] };
 
     size_t node = 1;
 
@@ -117,9 +117,9 @@ extern int Find_ngb_tree(const size_t ipart, const float hsml, int *ngblist)
 
         if (tree[node].npart != 0) {
 
-            float dx = pos_i[0] - tree[node].pos[0];
-            float dy = pos_i[1] - tree[node].pos[1];
-            float dz = pos_i[2] - tree[node].pos[2];
+            double dx = pos_i[0] - tree[node].pos[0];
+            double dy = pos_i[1] - tree[node].pos[1];
+            double dz = pos_i[2] - tree[node].pos[2];
 
             if (dx > boxhalf)
 		    	dx -= boxsize;
@@ -139,7 +139,7 @@ extern int Find_ngb_tree(const size_t ipart, const float hsml, int *ngblist)
 			if (dz < -boxhalf)
 				dz += boxsize;
             
-			float dl = 2*tree[node].size + hsml;
+			double dl = 2*tree[node].size + hsml;
 
             if (dx*dx + dy*dy + dz*dz < dl*dl) { // check for collision
                 
@@ -207,7 +207,7 @@ static void refine(const size_t ipart, size_t *grandparent, size_t *parent)
 {	
     const size_t node = *parent;
     const size_t jpart = tree[node].down;	// Remember old particle
-    const float *pos_j = &tree[node].pos[0];
+    const double *pos_j = &tree[node].pos[0];
 
 	tree[node].down = treesize; // Add at the end of tree 
 
@@ -257,9 +257,9 @@ static void refine(const size_t ipart, size_t *grandparent, size_t *parent)
 /* Find index of subnode from relative position */
 static int pos2idx(size_t ipart,size_t node)
 {
-	float dx = P[ipart].Pos[0] -tree[node].pos[0];
-	float dy = P[ipart].Pos[1] -tree[node].pos[1];
-	float dz = P[ipart].Pos[2] -tree[node].pos[2];
+	double dx = P[ipart].Pos[0] -tree[node].pos[0];
+	double dy = P[ipart].Pos[1] -tree[node].pos[1];
+	double dz = P[ipart].Pos[2] -tree[node].pos[2];
 
 	return (dx>0)  + ((dy>0) << 1) + ( (dz>0) << 2);
 }
