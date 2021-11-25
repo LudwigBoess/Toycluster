@@ -1,26 +1,18 @@
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_sf_hyperg.h>
 #include <gsl/gsl_sort.h>
+#include <gsl/gsl_heapsort.h>
 
 #include "globals.h"
 
 #define NTABLE 2048    // length of interpolation table of M(r) 
 
-/* Cum. mass profile is inverted from a table */
-static void fill_mass_profile_table(int);
-static double invert_mass_profile(double);
 static void sort_particles(int *, const size_t );
 
 static void sample_DM_particles(const int);
 static void sample_Gas_particles(const int);
 
-/* Cummulative Mass table interpolation */
-static double dfdr_table[NTABLE], offset_table[NTABLE], 
-       Mass_profile_table[NTABLE];
-
-/*
- * Positions are sampled around 0 ! Haloes are moved into position later
- */
+/*Positions are sampled around 0 ! Haloes are moved into position later */
 
 void Make_positions()
 {
@@ -35,6 +27,8 @@ void Make_positions()
 		
 		fflush(stdout);
 
+		Setup_Profiles(i);
+
 		sample_DM_particles(i);
 		
 		sample_Gas_particles(i);
@@ -48,24 +42,23 @@ void Make_positions()
 static void sample_DM_particles(const int i)
 {
 	const double dCoM[3] = {Halo[i].D_CoM[0],Halo[i].D_CoM[1],Halo[i].D_CoM[2]};
-	const double qmax = Halo[i].MassCorrFac; 
 
 	#pragma omp parallel for
     for (int ipart = 0; ipart < Halo[i].Npart[1]; ipart++) { // DM
+		
+		for (;;) { // DM halo M(<R) inverted
 
-		for (;;) { // Hernquist halo M(<R) inverted
+			double theta = acos(2 *  erand48(Omp.Seed) - 1);
+           	double phi = 2*pi * erand48(Omp.Seed);
 
-			float theta = acos(2 *  erand48(Omp.Seed) - 1);
-           	float phi = 2*pi * erand48(Omp.Seed);
+           	double sin_theta = sin(theta);
+           	double cos_theta = cos(theta);
 
-           	float sin_theta = sin(theta);
-           	float cos_theta = cos(theta);
+           	double sin_phi = sin(phi);
+           	double cos_phi = cos(phi);
 
-           	float sin_phi = sin(phi);
-           	float cos_phi = cos(phi);
-
-           	double sqrt_q =  sqrt(erand48(Omp.Seed) * qmax);  
-           	double r = Halo[i].A_hernq * sqrt_q / (1-sqrt_q);
+           	double q =  erand48(Omp.Seed);
+           	double r = Inverted_DM_Mass_Profile(q, i);
 
            	double x = r * sin_theta * cos_phi;
            	double y = r * sin_theta * sin_phi;
@@ -73,7 +66,7 @@ static void sample_DM_particles(const int i)
 
 			if (i != Halo_containing(1, x+dCoM[0], y+dCoM[1], z+dCoM[2])) 
             	continue; // draw another one 
-			
+
 			Halo[i].DM[ipart].Pos[0] = (float) x;
            	Halo[i].DM[ipart].Pos[1] = (float) y;
            	Halo[i].DM[ipart].Pos[2] = (float) z;
@@ -92,8 +85,6 @@ static void sample_Gas_particles(const int i)
 	const double dCoM[3] ={Halo[i].D_CoM[0],Halo[i].D_CoM[1],Halo[i].D_CoM[2]};
 	const double boxhalf = Param.Boxsize/2;
 
-	Setup_Mass_Profile(i);
-
 	#pragma omp parallel for
    	for (size_t ipart = 0; ipart < Halo[i].Npart[0]; ipart++) {
 		
@@ -103,7 +94,7 @@ static void sample_Gas_particles(const int i)
         	double phi = 2*pi * erand48(Omp.Seed);
 
            	double m = erand48(Omp.Seed) * Halo[i].Mass[0];  
-           	double r = Invert_Mass_Profile(m);
+           	double r = Inverted_Gas_Mass_Profile(m);
    
            	double x = r * sin(theta) * cos(phi);
            	double y = r * sin(theta) * sin(phi);
@@ -216,6 +207,7 @@ void Show_mass_in_r200()
 }
 
 /* center on CoM */
+
 void center_positions()
 {
     const double mGas = Param.Mpart[0];
@@ -330,6 +322,7 @@ void Reassign_particles_to_halos()
 
 /* check for collision between position xyz and clusters
  * via maximum of density for gas particles and sampling radius for DM */
+
 int Halo_containing(const int type, const float x, const float y, const float z)
 {
 	const double boxsize = Param.Boxsize;
@@ -372,8 +365,7 @@ int Halo_containing(const int type, const float x, const float y, const float z)
    	   		float r = sqrt(p2(x - Halo[j].D_CoM[0]) + p2(y - Halo[j].D_CoM[1])  
 				 + p2(z - Halo[j].D_CoM[2]));
 
-			double rho_gas = Gas_density_profile(r, Halo[j].Rho0, Halo[j].Beta,
-							Halo[j].Rcore, Halo[j].Rcut,Halo[j].Have_Cuspy);
+			double rho_gas = Gas_Density_Profile(r, j);
 
        		if ( (rho_gas > rho_max) && (r < Halo[j].R_Sample[0]) ) {
 			
@@ -397,16 +389,14 @@ int compare_int(const void * a, const void *b)
 }
 
 
-/* 
- * memory efficient out of place sorting of both particle structures 
- * Knowing where idx starts in memory we can reconstruct ipart 
- */
+/* memory efficient out of place sorting of both particle structures 
+ * Knowing where idx starts in memory we can reconstruct ipart */
 
 static void sort_particles(int *ids, const size_t nPart) 
 {
     size_t *idx = Malloc(nPart*sizeof(*idx));
 
-	Qsort_Index(Omp.NThreads, idx, ids, nPart, sizeof(*ids), &compare_int);
+	gsl_heapsort_index(idx, ids, nPart, sizeof(*ids), &compare_int);
 	
     for (size_t i = 0; i < nPart; i++) {
 

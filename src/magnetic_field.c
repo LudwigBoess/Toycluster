@@ -1,5 +1,6 @@
 #include "globals.h"
 #include "tree.h"
+//#include "magnetic_field_turb.h"
 
 #define BMAX 18e-6
 #define KLOWCUT (2*pi / Param.Boxsize * 32)
@@ -9,6 +10,7 @@
 static void set_magnetic_vector_potential();
 static void normalise_magnetic_field();
 
+
 void Make_magnetic_field()
 {
     printf("Magnetic field: \n"
@@ -17,8 +19,11 @@ void Make_magnetic_field()
             ,Param.Bfld_Norm, Param.Bfld_Eta);
 
     set_magnetic_vector_potential();
-
+#ifndef TURB_B_FIELD
 	Bfld_from_rotA_SPH(); 
+#else
+	Bfld_from_turb_spectrum();
+#endif
 
  	normalise_magnetic_field();
 
@@ -41,23 +46,21 @@ static void set_magnetic_vector_potential()
 
 			for (int i = 0; i < Param.Nhalos; i++) {
 
-			if (Halo[i].Mass[0] == 0) // DM only halos
-				continue;
+				if (Halo[i].Mass[0] == 0) // DM only halos
+					continue;
 
-			float dx = P[ipart].Pos[0] - Halo[i].D_CoM[0] - boxhalf,
-				  dy = P[ipart].Pos[1] - Halo[i].D_CoM[1] - boxhalf,
-				  dz = P[ipart].Pos[2] - Halo[i].D_CoM[2] - boxhalf;
+				float dx = P[ipart].Pos[0] - Halo[i].D_CoM[0] - boxhalf,
+					  dy = P[ipart].Pos[1] - Halo[i].D_CoM[1] - boxhalf,
+					  dz = P[ipart].Pos[2] - Halo[i].D_CoM[2] - boxhalf;
 
-			double r2 = dx*dx + dy*dy + dz*dz;
+				double r2 = dx*dx + dy*dy + dz*dz;
 
-			double rho_i = Gas_density_profile(sqrt(r2), Halo[i].Rho0,
-						Halo[i].Beta, Halo[i].Rcore, Halo[i].Rcut, 
-						Halo[i].Have_Cuspy);
+				double rho_i = Gas_Density_Profile(sqrt(r2), i);
 
-			double A = pow(rho_i/Halo[i].Rho0, Param.Bfld_Eta);
+				double A = pow(rho_i/Halo[i].Rho0, Param.Bfld_Eta);
 
-			if (A > A_max)
-				A_max = A;
+				if (A > A_max)
+					A_max = A;
 			}
 		
 			SphP[ipart].Apot[0] = (float) A_max;
@@ -67,29 +70,41 @@ static void set_magnetic_vector_potential()
 
     return ;  
 }
+/* Normalise BFLD inside 0.8 rc of halo 0 */
 
-static void normalise_magnetic_field()
+static void normalise_magnetic_field() // doesnt work correctly
 {
 	const float boxhalf = 0.5 * Param.Boxsize;
 
- 	double max_B2 = 0;
+ 	double mean_B = 0; // in 0.8rc of Halo[0]
+	uint64_t cnt = 0;
 
-	for (size_t ipart = 0; ipart < Param.Npart[0]; ipart++) {
+	#pragma omp parallel for reduction(+:mean_B,cnt)
+	for (size_t ipart = 0; ipart < Halo[0].Npart[0]; ipart++) {
 		
-		double bfld2 = p2(SphP[ipart].Bfld[0]) 
-				+ p2(SphP[ipart].Bfld[1]) 
-				+ p2(SphP[ipart].Bfld[2]);
+		double dx = P[ipart].Pos[0] - Halo[0].D_CoM[0] - boxhalf,
+			   dy = P[ipart].Pos[1] - Halo[0].D_CoM[1] - boxhalf,
+			   dz = P[ipart].Pos[2] - Halo[0].D_CoM[2] - boxhalf;
 
-		max_B2 = fmax(max_B2, bfld2);
+		double r = sqrt(dx*dx + dy*dy + dz*dz);
+
+		if (r > 0.8*Halo[0].Rcore)
+			continue;
+
+		double bfld = sqrt(p2(SphP[ipart].Bfld[0]) + p2(SphP[ipart].Bfld[1]) 
+						 + p2(SphP[ipart].Bfld[2]));
+
+		mean_B += bfld;
+		cnt++;
 	}
 
-	double max_bfld = sqrt(max_B2);
+	mean_B /= cnt;
 
-   	double norm = Param.Bfld_Norm/max_bfld/ sqrt(3);
+   	double norm = Param.Bfld_Norm/mean_B*sqrt(2);
 
 	printf("Bfld Norm = %g \n", norm );
 
-	int cnt = 0;
+	cnt = 0;
 
 	#pragma omp parallel for reduction(+:cnt) 
    	for (size_t ipart = 0; ipart < Param.Npart[0]; ipart++) {
@@ -98,19 +113,20 @@ static void normalise_magnetic_field()
 		SphP[ipart].Bfld[1] *= norm;
 		SphP[ipart].Bfld[2] *= norm;
 
-		double B2 = p2(SphP[ipart].Bfld[0]) + p2(SphP[ipart].Bfld[1]) + 
-					p2(SphP[ipart].Bfld[2]);
 	
-		float x = P[ipart].Pos[0] - boxhalf,
-			  y = P[ipart].Pos[1] - boxhalf,
-			  z = P[ipart].Pos[2] - boxhalf;
+		double 	x = P[ipart].Pos[0] - boxhalf,
+			  	y = P[ipart].Pos[1] - boxhalf,
+			 	z = P[ipart].Pos[2] - boxhalf;
 			
 		int i = Halo_containing(ipart,x,y,z);
 		
 		double bmax = BMAX;
 
-		if (i > 1) // subhaloes
+		if (i >= Sub.First) // subhaloes
 			bmax = 2e-6;
+
+		double B2 = p2(SphP[ipart].Bfld[0]) + p2(SphP[ipart].Bfld[1]) + 
+					p2(SphP[ipart].Bfld[2]);
 
 		if ((B2 > p2(bmax))) {
 
@@ -124,7 +140,7 @@ static void normalise_magnetic_field()
 		}
 	}
 
-	printf("Bfld of %d particles limited to %g G\n", cnt, BMAX);
+	printf("Bfld of %llu particles limited to %g G\n", cnt, BMAX);
 
 	return ;
 }

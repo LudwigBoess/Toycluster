@@ -1,28 +1,31 @@
+# This is Toycluster, a code that generates an artificial cluster merger.
+# Clusters consist of a DM halo defined by its density profile and a gaseous
+# ICM defined by a beta model. Under the assumption of hydrostatic equillibrium
+# all other quantities follow. (Donnert 2014, Donnert et al in prep.)
+
 SHELL = /bin/bash
 
-## OPTIONS  ##
-OPT 	+= -DNFWC_DUFFY08	# alternate fit to concentr. param
+#OPT += -DPARABOLA       # merge in a parabola
+OPT	+= -DCOMET			 # merge like a comet, ball+tail (recommended)
+						 # if nothing is selected, merge as ball with R_Sample
 
-OPT += -DBETA=0.66
+OPT 	+= -DGIVEPARAMS		 # set beta models in parameter file
 
-#OPT     += -DPARABOLA       # merge in a parabola
-OPT	+= -DCOMET			# merge like a comet, ball+tail (recommended)
-
-#OPT	+= -DDOUBLE_BETA_COOL_CORES
-
-#OPT 	+= -DGIVEPARAMS		# more merger parameters in .par file
-
-OPT	+= -DNO_RCUT_IN_T		# set Rcut very large
-
-#OPT	+= -DSUBSTRUCTURE	# add substructure
-#OPT += -DSUBHOST=1		# host halos
-#OPT	+= -DSLOW_SUBSTRUCTURE	# put subhalos on Hernquist orbits
-#OPT += -DREPORTSUBHALOS		# print info about all subhaloes
+#OPT += -DSUBSTRUCTURE		 # add a population of galaxy-like subhalos
+#OPT += -DSUBHOST=0			 # host subhalos in this cluster
+#OPT += -DSLOW_SUBSTRUCTURE	 # put subhalos on Hernquist orbits
+#OPT += -DREPORTSUBHALOS	 # print info about all subhaloes
 
 #OPT += -DADD_THIRD_SUBHALO  # manually set the first subhalo mass, pos, vel
 #OPT  += -DTHIRD_HALO_ONLY
 
-#OPT += -DSPH_CUBIC_SPLINE 	# for use with Gadget2
+#OPT += -DSPH_CUBIC_SPLINE 	 # for use with Gadget2
+
+#OPT	+= -DDOUBLE_BETA_COOL_CORES # cool cores as double beta model
+
+OPT 	+= -DNFWC_DUFFY08	 # alternate fit to concentr. param
+
+OPT     += -DTURB_B_FIELD    # set up a turbulent Bfield instead of a vector potential
 
 ## Target Computer ##
 ifndef SYSTYPE
@@ -34,6 +37,15 @@ CC       = gcc
 OPTIMIZE = -Wall -g -O2
 GSL_INCL = $(CPPFLAGS)
 GSL_LIBS = $(LDFLAGS)
+FFTW_LIBS 	= 
+FFTW_INCL 	= -lfftw3
+
+ifeq ($(SYSTYPE),SuperMUC-NG)
+CC      	=  gcc
+OPTIMIZE	= -Ofast -g
+GSL_INCL = $(GSL_INC)
+GSL_LIBS = $(GSL_SHLIB)
+endif
 
 ifeq ($(SYSTYPE),SuperMUC-NG)
 CC      	=  gcc
@@ -44,7 +56,7 @@ endif
 
 ifeq ($(SYSTYPE),DARWIN)
 CC      	=  icc
-OPTIMIZE	=-fast -g -m64  -xhost
+OPTIMIZE	= -fast -g
 GSL_INCL 	= $(CPPFLAGS)
 GSL_LIBS	= -L/Users/jdonnert/Dev/lib
 endif
@@ -52,10 +64,8 @@ endif
 ifeq ($(SYSTYPE),MSI)
 CC      	= icc
 OPTIMIZE	= -Wall -g  -O3 -xhost
-GSL_INCL 	= 
-GSL_LIBS	= 
-FFTW_LIBS 	= 
-FFTW_INCL 	=
+GSL_INCL 	= -I/home/jonestw/donne219/Libs/$(shell hostname)/include
+GSL_LIBS	= -L/home/jonestw/donne219/Libs/$(shell hostname)/lib
 endif
 
 ifeq ($(SYSTYPE),mach64.ira.inaf.it)
@@ -74,30 +84,29 @@ EXEC = Toycluster
 ## FILES ##
 
 SRCDIR	= src/
+ 
+SRCFILES := ${shell find $(SRCDIR) -name \*.c -print} # all .c files in SRCDIR
+OBJFILES = $(SRCFILES:.c=.o)
 
-OBJFILES = main.o aux.o positions.o velocities.o temperature.o \
-		   magnetic_field.o io.o unit.o cosmo.o setup.o  tree.o \
-		   sph.o wvt_relax.o substructure.o ids.o sort.o peano.o
-
-OBJS	= $(addprefix $(SRCDIR),$(OBJFILES))
-
-INCLFILES = globals.h proto.h io.h tree.h sph.h macro.h sort.h peano.h \
-			../Makefile
-
-INCL	= $(addprefix $(SRCDIR),$(INCLFILES))
+INCLFILES := ${shell find src -name \*.h -print} # all .h files in SRCDIR
+INCLFILES += Makefile
 
 CFLAGS 	= -std=c99 -fopenmp $(OPTIMIZE) $(OPT) $(GSL_INCL) $(FFTW_INCL)
 
-LINK	= -lm -lgsl -lgslcblas $(GSL_LIBS) $(FFTW_LIBS)
+LINK	= $(GSL_LIBS) $(FFTW_INCL) -lm -lgsl -lgslcblas 
 
 ## RULES ## 
 
-$(EXEC)	: $(OBJS)
-	@echo SYSTYPE=$(SYSTYPE)
-	$(CC) $(CFLAGS) $(OBJS) $(LINK) -o $(EXEC)
-	@cd src && ctags *.[ch]
+%.o : %.c
+	@echo [CC] $@
+	@$(CC) $(CFLAGS)  -o $@ -c $<
 
-$(OBJS)	: $(INCL)
+$(EXEC)	: $(OBJFILES)
+	@echo SYSTYPE=$(SYSTYPE)
+	$(CC) $(CFLAGS) $(OBJFILES) $(LINK) -o $(EXEC)
+	@ctags -w $(SRCFILES) $(INCLFILES)
+
+$(OBJFILES)	: $(INCLFILES) $(SRCFILES)
 
 clean	: 
-	rm -f  $(OBJS) $(EXEC)
+	rm -f  $(OBJFILES) $(EXEC)
