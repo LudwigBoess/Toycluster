@@ -29,6 +29,7 @@ Bfld_Eta    0.5             % like Bonafede 2010. B0 /=2 if Mtotal<5d4
 
 h_100       0.7             % Hubble/100
 
+
 %Units
 UnitLength_in_cm 			3.085678e21        %  1.0 kpc
 UnitMass_in_g 				1.989e43           %  1.0e10 solar masses
@@ -47,17 +48,18 @@ c_nfw_1           4.089
 v_com_1           0
 rc_1              300
 
+
 %% -DADD_THIRD_SUBHALO Options
 
 SubFirstMass 1e12
 
-SubFirstPos0 0
-SubFirstPos1 0
-SubFirstPos2 0
+SubFirstPos0 10
+SubFirstPos1 120
+SubFirstPos2 980
 
-SubFirstVel0 0
-SubFirstVel1 0
-SubFirstVel2 0
+SubFirstVel0 100
+SubFirstVel1 100
+SubFirstVel2 100
 
 %% -DDOUBLE_BETA_COOL_CORES Options
 

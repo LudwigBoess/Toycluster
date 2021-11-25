@@ -47,6 +47,13 @@ GSL_INCL = $(GSL_INC)
 GSL_LIBS = $(GSL_SHLIB)
 endif
 
+ifeq ($(SYSTYPE),SuperMUC-NG)
+CC      	=  gcc
+OPTIMIZE	= -Ofast -g
+GSL_INCL = $(GSL_INC)
+GSL_LIBS = $(GSL_SHLIB)
+endif
+
 ifeq ($(SYSTYPE),DARWIN)
 CC      	=  icc
 OPTIMIZE	= -fast -g
