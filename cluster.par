@@ -68,6 +68,6 @@ Rc_Fac		40	% decrease in Rcore
 
 %% TURB_B_FIELD Options
 Bfld_Scale            50.0      % smallest scale of turb B-field
-Kmin_Scale            0.01       % To rescale: Kmin = 2 * pi / (Boxsize * Kmin_Scale)
+Kmin_Scale            0.01       % To cut off large modes: Kmin = 2 * pi / (Boxsize * Kmin_Scale)
 Turb_Spectral_Index  -3.66       % Spectral Index of turbulence spectrum
 
