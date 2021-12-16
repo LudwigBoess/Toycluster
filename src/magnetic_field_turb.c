@@ -3,13 +3,6 @@
 #include "globals.h"
 #include "tree.h"
 
-// #include <iostream>
-// #include <fstream.h>
-
-// #define pi 3.14159
-
-//#define p2(a) (a * a)
-//#define p3(a) (a * a * a)
 #define length3(a) (sqrt(a[0] * a[0] + a[1] * a[1] + a[2] + a[2]))
 
 static double Kmin = 0, Kmax = 0;
