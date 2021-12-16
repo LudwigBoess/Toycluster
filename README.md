@@ -11,11 +11,10 @@
 	* Velocities parametrized using zero-energy orbit
 	* optional: substructure population from Giocoli 2010
 	* optional: placement of a third halo anywhere in the box
+	* optional: set up a turbulent magnetic field, instead of the vector potential
 	
 ## Known Issues: 
-	* Magnetic field normalisation resolution dependent, due to low accuracy
-		SPH rotation operator. (LMB: wrong, issue due to race condition in OMP parallel loop. Fixed!)
-	* DivB=0 constraint pretty bad.
+	* DivB=0 constraint pretty bad for ordered magnetic field
 
 
 # Usage:
@@ -44,6 +43,8 @@ OPT += -DADD_THIRD_SUBHALO          # manually set the first subhalo mass, pos, 
 OPT += -DTHIRD_HALO_ONLY
 
 OPT += -DSPH_CUBIC_SPLINE           # for use with Gadget2
+
+OPT += -DTURB_B_FIELD    # set up a turbulent Bfield instead of a vector potential
 ```
 
 Parameter file:
@@ -108,6 +109,11 @@ SubFirstVel2 100
 
 Rho0_Fac	50  % increase in Rho0
 Rc_Fac		40  % decrease in Rcore
+
+%% TURB_B_FIELD Options
+Bfld_Scale            50.0      % smallest scale of turb B-field
+Kmin_Scale            0.01       % To cut off large modes: Kmin = 2 * pi / (Boxsize * Kmin_Scale)
+Turb_Spectral_Index  -3.66       % Spectral Index of turbulence spectrum
 ```
 
 To run:
