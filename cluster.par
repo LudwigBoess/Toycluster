@@ -2,7 +2,7 @@
 
 Output_file IC_single_0
 
-Ntotal      100000         % Total Number of Particles in R200
+Ntotal      1000000         % Total Number of Particles in R200
 Mtotal      1e5             % Total Mass in Code Units
 
 Mass_Ratio  1.2          % set =0 for single cluster
@@ -67,6 +67,7 @@ Rho0_Fac	50	% increase in Rho0
 Rc_Fac		40	% decrease in Rcore
 
 %% TURB_B_FIELD Options
-Bfld_Scale            100.0      % smallest scale of turb B-field 
-Turb_Spectral_Index  -3.66   % Spectral Index of turbulence spectrum
+Bfld_Scale            50.0      % smallest scale of turb B-field
+Kmin_Scale            0.01       % To rescale: Kmin = 2 * pi / (Boxsize * Kmin_Scale)
+Turb_Spectral_Index  -3.66       % Spectral Index of turbulence spectrum
 

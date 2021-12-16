@@ -30,15 +30,12 @@ void Bfld_from_turb_spectrum()
 {
     int i = 0;
 
-    // needs to be scaled down, no idea why
-    Param.Bfld_Norm *= 0.1;
-
     complex *Bk[3] = {NULL}; /* holds B in k-space */
     double *B[3] = {NULL};    /* holds B in real-space */
     double *KVec[3] = {NULL}; /* holds k vector */
 
     const int nGrid = 2 * ceil(Param.Boxsize / Param.Bfld_Scale);
-    Kmin = 2 * pi / Param.Boxsize;
+    Kmin = 2 * pi / (Param.Boxsize * Param.Kmin_Scale);
     Kmax = 0.5 * Kmin * nGrid; /* Nyquist frequency */
 
     printf("Magnetic field: (Bonafede et al. 2010) \n"
@@ -49,7 +46,7 @@ void Bfld_from_turb_spectrum()
            "   kmax            = %g /kpc \n"
            "   kmin            = %g /kpc \n"
            "   spectral idx    = %g  \n",
-           Param.Bfld_Norm, nGrid, Param.Boxsize, Param.Boxsize / nGrid * 2,
+           Param.Bfld_Norm, nGrid, Param.Kmin_Scale * Param.Boxsize, Param.Boxsize / nGrid * 2,
            Kmax, Kmin, Param.Spectral_Index);
 
     allocate_grids(nGrid, B, Bk, KVec);
@@ -260,6 +257,7 @@ static void fill_fourier_grid(complex **Bk, double **KVec, const int nGrid)
 static void normalise_bfld_grid(const int nGrid, double **B)
 {
     int i, j, k;
+    double B_model[2] = {0.0};
 
     const int nTotal = nGrid * nGrid * (nGrid / 2 + 1);
 
@@ -274,7 +272,6 @@ static void normalise_bfld_grid(const int nGrid, double **B)
 
     const double normInv = 1.0 / global_mean / fftw3_norm;
 
-    
     for (i = 0; i < nGrid; i++)
     {
         for (j = 0; j < nGrid; j++)
@@ -286,26 +283,27 @@ static void normalise_bfld_grid(const int nGrid, double **B)
                 float z = (k + 0.5 * (1 - nGrid)) * cell2kpc;
 
                 double B_max = 0;
-                double B_model = 0.0;
 
                 for (int halo = 0; halo < Param.Nhalos; halo++)
                 {
 
-                    float dx = x - Halo[halo].D_CoM[0] - 0.5*Param.Boxsize,
-                          dy = y - Halo[halo].D_CoM[1] - 0.5*Param.Boxsize,
-                          dz = z - Halo[halo].D_CoM[2] - 0.5*Param.Boxsize;
+                    float dx = x + Halo[halo].D_CoM[0], // - 0.5*Param.Boxsize ),
+                          dy = y + Halo[halo].D_CoM[1], // - 0.5*Param.Boxsize ),
+                          dz = z + Halo[halo].D_CoM[2]; // - 0.5*Param.Boxsize );
 
                     double r2 = dx * dx + dy * dy + dz * dz;
 
                     double rho_i = Gas_Density_Profile(sqrt(r2), halo);
 
-                    B_model = pow(rho_i / Halo[halo].Rho0, Param.Bfld_Eta);
+                    B_model[halo] = pow(rho_i / Halo[halo].Rho0, Param.Bfld_Eta);
 
-                    if (B_model > B_max)
-                        B_max = B_model;
+                    if (B_model[halo] > B_max)
+                        B_max = B_model[halo];
                 }
 
-                double bNorm = B_model * normInv;
+                double B_use = B_model[0] > B_model[1] ? B_model[0] : B_model[1];
+
+                double bNorm = B_use * normInv;
 
                 int idx = Idx(nGrid, i, j, k);
                 B[0][idx] *= bNorm;
