@@ -129,6 +129,7 @@ extern struct Parameters{
 #ifdef TURB_B_FIELD
     double Bfld_Scale;
     double Spectral_Index;
+    double Kmin_Scale;
 #endif
 } Param;
 

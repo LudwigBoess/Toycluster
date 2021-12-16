@@ -461,9 +461,14 @@ void Read_param_file(char *filename)
     addr[nt] = &Param.Bfld_Scale;
     id[nt++] = REAL;
 
+    strcpy(tag[nt], "Kmin_Scale");
+    addr[nt] = &Param.Kmin_Scale;
+    id[nt++] = REAL;
+
     strcpy(tag[nt], "Turb_Spectral_Index");
     addr[nt] = &Param.Spectral_Index;
     id[nt++] = REAL;
+
 #endif
 
     /* Add above */
