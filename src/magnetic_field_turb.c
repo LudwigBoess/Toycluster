@@ -287,9 +287,9 @@ static void normalise_bfld_grid(const int nGrid, double **B)
                 for (int halo = 0; halo < Param.Nhalos; halo++)
                 {
 
-                    float dx = x + Halo[halo].D_CoM[0], // - 0.5*Param.Boxsize ),
-                          dy = y + Halo[halo].D_CoM[1], // - 0.5*Param.Boxsize ),
-                          dz = z + Halo[halo].D_CoM[2]; // - 0.5*Param.Boxsize );
+                    float dx = x + Halo[halo].D_CoM[0],
+                          dy = y + Halo[halo].D_CoM[1],
+                          dz = z + Halo[halo].D_CoM[2];
 
                     double r2 = dx * dx + dy * dy + dz * dz;
 
