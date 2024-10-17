@@ -25,7 +25,7 @@ OPT 	+= -DGIVEPARAMS		 # set beta models in parameter file
 
 OPT 	+= -DNFWC_DUFFY08	 # alternate fit to concentr. param
 
-OPT     += -DTURB_B_FIELD    # set up a turbulent Bfield instead of a vector potential
+#OPT     += -DTURB_B_FIELD    # set up a turbulent Bfield instead of a vector potential
 
 ## Target Computer ##
 ifndef SYSTYPE
@@ -37,21 +37,16 @@ CC       = gcc
 OPTIMIZE = -Wall -g -O2
 GSL_INCL = $(CPPFLAGS)
 GSL_LIBS = $(LDFLAGS)
-FFTW_LIBS 	= 
-FFTW_INCL 	= -lfftw3
+FFTW_LIBS 	=
+FFTW_INCL 	=
 
 ifeq ($(SYSTYPE),SuperMUC-NG)
-CC      	=  gcc
-OPTIMIZE	= -Ofast -g
+CC      	=  icc
+OPTIMIZE	= -O2 -g -fopenmp
 GSL_INCL = $(GSL_INC)
 GSL_LIBS = $(GSL_SHLIB)
-endif
-
-ifeq ($(SYSTYPE),SuperMUC-NG)
-CC      	=  gcc
-OPTIMIZE	= -Ofast -g
-GSL_INCL = $(GSL_INC)
-GSL_LIBS = $(GSL_SHLIB)
+FFTW_INCL= $(FFTW_INC)
+FFTW_LIBS= $(FFTW_SHLIB) $(FFTW_MPI_LIB) $(FFTW_OPENMP_SHLIB)
 endif
 
 ifeq ($(SYSTYPE),DARWIN)
@@ -93,7 +88,7 @@ INCLFILES += Makefile
 
 CFLAGS 	= -std=c99 -fopenmp $(OPTIMIZE) $(OPT) $(GSL_INCL) $(FFTW_INCL)
 
-LINK	= $(GSL_LIBS) $(FFTW_INCL) -lm -lgsl -lgslcblas 
+LINK	= $(GSL_LIBS) $(FFTW_LIBS) -lm -lgsl -lgslcblas -lfftw3 
 
 ## RULES ## 
 
